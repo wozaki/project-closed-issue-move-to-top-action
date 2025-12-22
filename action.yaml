@@ -2,11 +2,11 @@ name: Move Closed Issue to Top of Project Column
 description: When an issue is closed, move it to the top of a specified column in GitHub Project V2
 
 inputs:
-  project-number:
-    description: GitHub Project V2 number
-    required: true
   organization:
     description: Organization or User name that owns the project
+    required: true
+  project-number:
+    description: GitHub Project V2 number
     required: true
   status-name:
     description: Target status column name
