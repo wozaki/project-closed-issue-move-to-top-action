@@ -1,10 +1,13 @@
-import assert from 'node:assert'
+import * as assert from 'node:assert'
 import * as fs from 'node:fs/promises'
 import { Octokit } from '@octokit/action'
 import { retry } from '@octokit/plugin-retry'
 import type { WebhookEvent } from '@octokit/webhooks-types'
 
-export const getOctokit = () => new (Octokit.plugin(retry))()
+export const getOctokit = (token?: string) => {
+  const OctokitWithRetry = Octokit.plugin(retry)
+  return token ? new OctokitWithRetry({ auth: token }) : new OctokitWithRetry()
+}
 
 export type Context = {
   repo: {
@@ -26,12 +29,13 @@ export const getContext = async (): Promise<Context> => {
 
 const getRepo = () => {
   const [owner, repo] = getEnv('GITHUB_REPOSITORY').split('/')
-  assert(owner, 'GITHUB_REPOSITORY must have an owner part')
-  assert(repo, 'GITHUB_REPOSITORY must have a repo part')
+  assert.ok(owner, 'GITHUB_REPOSITORY must have an owner part')
+  assert.ok(repo, 'GITHUB_REPOSITORY must have a repo part')
   return { owner, repo }
 }
 
 const getEnv = (name: string): string => {
-  assert(process.env[name], `${name} is required`)
-  return process.env[name]
+  const value = process.env[name]
+  assert.ok(value, `${name} is required`)
+  return value
 }

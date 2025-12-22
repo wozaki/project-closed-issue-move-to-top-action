@@ -1,89 +1,51 @@
-# typescript-action [![ts](https://github.com/int128/typescript-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/int128/typescript-action/actions/workflows/ts.yaml)
+# Move Closed Issue to Top of Project Column
 
-This is a template of TypeScript action.
-Inspired from https://github.com/actions/typescript-action.
+A GitHub Action that automatically moves closed issues to the top of a specified column in GitHub Project V2.
 
-## Features
+## Overview
 
-- Ready to develop with the minimum configs
-  - tsconfig
-  - Biome
-  - Vitest
-- Automated continuous release
-- Keep consistency of generated files
-- Shipped with Renovate config
+When an issue is closed, this action:
+1. Checks if the issue belongs to a specific GitHub Project V2
+2. Updates the issue's status to the specified column (default: "Done")
+3. **Moves the issue to the TOP of that column**
 
-## Getting Started
+This ensures that recently closed issues are always visible at the top of your project board.
 
-Click `Use this template` to create a repository.
+## Usage
 
-An initial release `v0.0.0` is automatically created by GitHub Actions.
-You can see the generated files in `dist` directory on the tag.
-
-Then, checkout your repository and test it. Node.js is required.
-
-```console
-$ git clone https://github.com/your/repo.git
-
-$ pnpm i
-$ pnpm test
-```
-
-Create a pull request with your change.
-
-After merging the pull request, a new minor release (such as `v0.1.0`) is created.
-
-### Stable release
-
-When you want to create a stable release, change the major version in [release workflow](.github/workflows/release.yaml).
+Create a workflow file (e.g., `.github/workflows/move-closed-issue.yaml`):
 
 ```yaml
-- uses: int128/release-typescript-action@v1
-  with:
-    major-version: 1
-```
+name: Move Closed Issue to Top
 
-Then a new stable release `v1.0.0` is created.
+on:
+  issues:
+    types: [closed]
+
+jobs:
+  move-to-top:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: wozaki/project-closed-issue-move-to-top-action@v1
+        with:
+          project-number: 1
+          organization: your-org-or-username
+          status-name: Done
+          github-token: ${{ secrets.PROJECT_PAT }}  # PAT or GitHub App token with project scope
+```
 
 ## Specification
 
-To run this action, create a workflow as follows:
-
-```yaml
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: int128/typescript-action@v1
-        with:
-          name: hello
-```
-
 ### Inputs
 
-| Name   | Default    | Description   |
-| ------ | ---------- | ------------- |
-| `name` | (required) | example input |
+| Name             | Required | Default                                 | Description                                  |
+| ---------------- | -------- | --------------------------------------- | -------------------------------------------- |
+| `project-number` | Yes      | -                                       | GitHub Project V2 number                     |
+| `organization`   | Yes      | -                                       | Organization or User name that owns the project |
+| `status-name`    | No       | `Done`                                  | Target status column name                    |
+| `github-token`   | Yes      | -                                       | GitHub token with `project` and `repo` permissions (PAT or GitHub App token) |
 
 ### Outputs
 
-| Name      | Description    |
-| --------- | -------------- |
-| `example` | example output |
+None.
 
-## Development
-
-### Release workflow
-
-When a pull request is merged into main branch, a new minor release is created by GitHub Actions.
-See https://github.com/int128/release-typescript-action for details.
-
-### Keep consistency of generated files
-
-If a pull request needs to be fixed by Prettier, an additional commit to fix it will be added by GitHub Actions.
-See https://github.com/int128/update-generated-files-action for details.
-
-### Dependency update
-
-You can enable Renovate to update the dependencies.
-This repository is shipped with the config https://github.com/int128/typescript-action-renovate-config.
