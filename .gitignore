@@ -98,6 +98,6 @@ Thumbs.db
 lib/
 
 # Only release tag contains dist directory
-/dist
+
 
 tmp/
