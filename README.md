@@ -28,9 +28,7 @@ jobs:
     steps:
       - uses: wozaki/project-closed-issue-move-to-top-action@v1
         with:
-          organization: your-org-or-username
           project-number: 1
-          status-name: Done
           github-token: ${{ secrets.PROJECT_PAT }}  # PAT or GitHub App token with project scope
 ```
 
@@ -40,7 +38,7 @@ jobs:
 
 | Name             | Required | Default                                 | Description                                  |
 | ---------------- | -------- | --------------------------------------- | -------------------------------------------- |
-| `organization`   | Yes      | -                                       | Organization or User name that owns the project |
+| `organization`   | No       | Repository owner                        | Organization or User name that owns the project |
 | `project-number` | Yes      | -                                       | GitHub Project V2 number                     |
 | `status-name`    | No       | `Done`                                  | Target status column name                    |
 | `github-token`   | Yes      | -                                       | GitHub token with `project` and `repo` permissions (PAT or GitHub App token) |

@@ -3,8 +3,8 @@ description: When an issue is closed, move it to the top of a specified column i
 
 inputs:
   organization:
-    description: Organization or User name that owns the project
-    required: true
+    description: Organization or User name that owns the project (defaults to repository owner)
+    required: false
   project-number:
     description: GitHub Project V2 number
     required: true
