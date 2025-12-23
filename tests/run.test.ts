@@ -54,14 +54,10 @@ describe('run', () => {
   const mockStatusField = () =>
     graphqlMock.mockResolvedValueOnce({
       node: {
-        fields: {
-          nodes: [
-            {
-              id: 'PVTF_field123',
-              name: 'Status',
-              options: [{ id: 'PVTFO_done123', name: 'Done' }],
-            },
-          ],
+        field: {
+          id: 'PVTF_field123',
+          name: 'Status',
+          options: [{ id: 'PVTFO_done123', name: 'Done' }],
         },
       },
     })

@@ -32,16 +32,14 @@ type ProjectQueryResponse = {
   }
 }
 
-type FieldsQueryResponse = {
+type FieldQueryResponse = {
   node?: {
-    fields?: {
-      nodes: Array<{
+    field?: {
+      id: string
+      name: string
+      options?: Array<{
         id: string
         name: string
-        options?: Array<{
-          id: string
-          name: string
-        }>
       }>
     }
   }
@@ -121,18 +119,16 @@ async function fetchStatusFieldDetails(
   statusName: string,
 ): Promise<{ fieldId: string; optionId: string }> {
   const query = `
-    query($projectId: ID!) {
+    query($projectId: ID!, $statusName: String!) {
       node(id: $projectId) {
         ... on ProjectV2 {
-          fields(first: 20) {
-            nodes {
-              ... on ProjectV2SingleSelectField {
+          field(name: "Status") {
+            ... on ProjectV2SingleSelectField {
+              id
+              name
+              options(names: [$statusName]) {
                 id
                 name
-                options {
-                  id
-                  name
-                }
               }
             }
           }
@@ -141,16 +137,15 @@ async function fetchStatusFieldDetails(
     }
   `
 
-  const response = await octokit.graphql<FieldsQueryResponse>(query, { projectId })
+  const response = await octokit.graphql<FieldQueryResponse>(query, { projectId, statusName })
 
-  const fields = response.node?.fields?.nodes || []
-  const statusField = fields.find((field: { name: string }) => field.name === 'Status')
+  const statusField = response.node?.field
 
   if (!statusField) {
     throw new Error('Status field not found in project')
   }
 
-  const option = statusField.options?.find((opt: { name: string }) => opt.name === statusName)
+  const option = statusField.options?.[0]
 
   if (!option) {
     throw new Error(`Status option "${statusName}" not found in Status field`)
