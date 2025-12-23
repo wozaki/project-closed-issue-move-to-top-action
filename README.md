@@ -32,6 +32,39 @@ jobs:
           github-token: ${{ secrets.PROJECT_PAT }}  # PAT or GitHub App token with project scope
 ```
 
+### Using with Multiple Projects
+
+You can configure the action to update multiple projects with different settings using a matrix strategy:
+
+```yaml
+name: Move Closed Issue to Top
+
+on:
+  issues:
+    types: [closed]
+
+jobs:
+  move-to-top:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - project-number: 1
+            status-name: Done
+          - project-number: 2
+            status-name: Completed
+          - project-number: 5
+            organization: other-user
+            status-name: Archived
+    steps:
+      - uses: wozaki/project-closed-issue-move-to-top-action@v1
+        with:
+          organization: ${{ matrix.organization || '' }}
+          project-number: ${{ matrix.project-number }}
+          status-name: ${{ matrix.status-name || 'Done' }}
+          github-token: ${{ secrets.PROJECT_PAT }}
+```
+
 ## Specification
 
 ### Inputs
