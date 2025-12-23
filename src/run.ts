@@ -62,9 +62,9 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
     throw new Error('Issue node ID is not available from the event context')
   }
 
-  // Fetch Project and check issue association
+  // Fetch Project and project item for this issue
   const projectId = await fetchProjectId(octokit, inputs.organization, inputs.projectNumber)
-  const projectItem = await checkIssueInProject(octokit, issueNodeId, projectId)
+  const projectItem = await fetchProjectItemForIssue(octokit, issueNodeId, projectId)
   if (!projectItem) {
     core.info(`Issue #${issueNumber} not in project, skipping`)
     return
@@ -157,7 +157,7 @@ async function fetchStatusFieldDetails(
   }
 }
 
-async function checkIssueInProject(
+async function fetchProjectItemForIssue(
   octokit: Octokit,
   issueNodeId: string,
   projectId: string,
