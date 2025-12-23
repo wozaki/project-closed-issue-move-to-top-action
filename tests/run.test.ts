@@ -110,9 +110,11 @@ describe('run', () => {
   })
 
   it('should handle errors gracefully', async () => {
-    // Project not found
+    // Project not found - mock both organization and user queries
     graphqlMock.mockResolvedValueOnce({
       organization: null,
+    })
+    graphqlMock.mockResolvedValueOnce({
       user: null,
     })
 

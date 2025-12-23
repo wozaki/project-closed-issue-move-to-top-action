@@ -84,13 +84,41 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
 }
 
 async function fetchProjectId(octokit: Octokit, organization: string, projectNumber: number): Promise<string> {
-  const query = `
+  // Try organization first
+  const orgQuery = `
     query($organization: String!, $projectNumber: Int!) {
       organization(login: $organization) {
         projectV2(number: $projectNumber) {
           id
         }
       }
+    }
+  `
+
+  try {
+    const orgResponse = await octokit.graphql<ProjectQueryResponse>(orgQuery, {
+      organization,
+      projectNumber,
+    })
+
+    const projectId = orgResponse.organization?.projectV2?.id
+
+    if (projectId) {
+      return projectId
+    }
+  } catch (error) {
+    // Only catch NOT_FOUND errors (organization doesn't exist)
+    // Re-throw other errors like network errors, auth errors, etc.
+    if (isGraphQLError(error) && hasNotFoundError(error)) {
+      // Organization not found, will try user query next
+    } else {
+      throw error
+    }
+  }
+
+  // Try user as fallback
+  const userQuery = `
+    query($organization: String!, $projectNumber: Int!) {
       user(login: $organization) {
         projectV2(number: $projectNumber) {
           id
@@ -99,18 +127,35 @@ async function fetchProjectId(octokit: Octokit, organization: string, projectNum
     }
   `
 
-  const response = await octokit.graphql<ProjectQueryResponse>(query, {
-    organization,
-    projectNumber,
-  })
+  try {
+    const userResponse = await octokit.graphql<ProjectQueryResponse>(userQuery, {
+      organization,
+      projectNumber,
+    })
 
-  const projectId = response.organization?.projectV2?.id || response.user?.projectV2?.id
+    const projectId = userResponse?.user?.projectV2?.id
 
-  if (!projectId) {
-    throw new Error(`Project #${projectNumber} not found for ${organization}`)
+    if (projectId) {
+      return projectId
+    }
+  } catch (error) {
+    // Only catch NOT_FOUND errors (user doesn't exist)
+    if (isGraphQLError(error) && hasNotFoundError(error)) {
+      // User not found, both organization and user queries failed
+    } else {
+      throw error
+    }
   }
 
-  return projectId
+  throw new Error(`Project #${projectNumber} not found for ${organization}`)
+}
+
+function isGraphQLError(error: unknown): error is { errors?: Array<{ type?: string }> } {
+  return typeof error === 'object' && error !== null && 'errors' in error
+}
+
+function hasNotFoundError(error: { errors?: Array<{ type?: string }> }): boolean {
+  return error.errors?.some((e) => e.type === 'NOT_FOUND') ?? false
 }
 
 async function fetchStatusFieldDetails(
