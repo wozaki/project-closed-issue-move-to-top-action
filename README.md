@@ -1,5 +1,8 @@
 # Move Closed Issue to Top of Project Column
 
+[![ts](https://github.com/wozaki/project-closed-issue-move-to-top-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/wozaki/project-closed-issue-move-to-top-action/actions/workflows/ts.yaml)
+[![License](https://img.shields.io/github/license/wozaki/project-closed-issue-move-to-top-action)](LICENSE)
+
 A GitHub Action that automatically moves closed issues to the top of a specified column in GitHub Project V2.
 
 ## Overview
