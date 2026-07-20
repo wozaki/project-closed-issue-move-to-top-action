@@ -19,7 +19,7 @@
     "@types/node": "20.19.43",
     "@vercel/ncc": "0.44.1",
     "pnpm": "10.34.5",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "vitest": "4.1.10"
   },
   "engines": {
