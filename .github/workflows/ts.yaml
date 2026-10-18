@@ -18,6 +18,9 @@ on:
       - '*.yaml'
       - .github/workflows/ts.yaml
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
