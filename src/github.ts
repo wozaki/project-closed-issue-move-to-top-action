@@ -6,7 +6,9 @@ import type { WebhookEvent } from '@octokit/webhooks-types'
 
 export const getOctokit = (token?: string) => {
   const OctokitWithRetry = Octokit.plugin(retry)
-  return token ? new OctokitWithRetry({ auth: token }) : new OctokitWithRetry()
+  // The default authStrategy of @octokit/action ignores auth and reads the GITHUB_TOKEN environment variable,
+  // so it must be unset to authenticate with the github-token input.
+  return token ? new OctokitWithRetry({ auth: token, authStrategy: undefined }) : new OctokitWithRetry()
 }
 
 export type Context = {
