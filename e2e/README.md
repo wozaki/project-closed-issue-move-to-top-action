@@ -7,6 +7,23 @@ They catch what unit tests can't: bundling regressions after a dependency update
 Each test gives the action the same environment variables as the Actions runner does for the usage in README (`organization` omitted, `status-name` default), with an `issues.closed` event payload of a fixture issue.
 The environment of the test process is not passed to the action.
 
+```mermaid
+sequenceDiagram
+    participant T as E2E test
+    participant A as Action (built bundle)
+    participant G as GitHub (fixture project and issues)
+
+    T->>G: Reset the fixture to the initial state
+    T->>A: Run with an issue closed event
+    A->>G: Update the project item of the issue
+    A-->>T: Exit code and logs
+    T->>G: Fetch the project state
+    G-->>T: Order and status of the items
+    Note over T: Verify the exit code, logs and project state
+```
+
+Each test case runs this sequence. Which fixtures and API calls each step uses is defined in `fixture.ts` and the tests.
+
 ## Running locally
 
 ```bash
