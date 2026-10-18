@@ -12,37 +12,69 @@ export const getToken = (): string => {
 }
 
 const MAX_ATTEMPTS = 3
+const REQUEST_TIMEOUT_MS = 30_000
 
-// Retries server errors, such as a 502 with an HTML body, so that a transient GitHub outage does not fail the test.
+type GraphQLBody<T> = {
+  data?: T
+  errors?: { type?: string; message?: string }[]
+}
+
+// Retries transient GitHub failures so that they do not fail the test.
 // The mutations used by the tests are idempotent, so retrying them is safe.
 const graphql = async <T>(query: string, variables: Record<string, unknown> = {}): Promise<T> => {
   for (let attempt = 1; ; attempt++) {
-    let response: Response
-    let text: string
-    try {
-      response = await fetch('https://api.github.com/graphql', {
-        method: 'POST',
-        headers: { authorization: `bearer ${getToken()}`, 'content-type': 'application/json' },
-        body: JSON.stringify({ query, variables }),
-      })
-      text = await response.text()
-    } catch (error) {
-      if (attempt < MAX_ATTEMPTS) {
-        await sleep(5_000 * attempt)
-        continue
-      }
-      throw error
+    const result = await requestGraphQL<T>(query, variables)
+    if ('data' in result) {
+      return result.data
     }
-    if (response.status >= 500 && attempt < MAX_ATTEMPTS) {
-      await sleep(5_000 * attempt)
-      continue
+    if (attempt >= MAX_ATTEMPTS) {
+      throw result.transientError
     }
-    const body = parseJSON(text) as { data?: T; errors?: unknown } | undefined
-    if (!response.ok || !body || body.errors || !body.data) {
-      throw new Error(`GraphQL request failed (${response.status}): ${text.slice(0, 1000)}`)
-    }
-    return body.data
+    await sleep(result.retryAfterMs ?? 5_000 * attempt)
   }
+}
+
+type GraphQLResult<T> = { data: T } | { transientError: Error; retryAfterMs?: number }
+
+// Returns the data, or a transient error to retry. Throws a permanent error.
+const requestGraphQL = async <T>(query: string, variables: Record<string, unknown>): Promise<GraphQLResult<T>> => {
+  let response: Response
+  let text: string
+  try {
+    response = await fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: { authorization: `bearer ${getToken()}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ query, variables }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
+    text = await response.text()
+  } catch (error) {
+    // fetch throws on network errors and on the request timeout.
+    return { transientError: error instanceof Error ? error : new Error(String(error)) }
+  }
+  const body = parseJSON(text) as GraphQLBody<T> | undefined
+  if (response.ok && body?.data && !body.errors) {
+    return { data: body.data }
+  }
+  const error = new Error(`GraphQL request failed (${response.status}): ${text.slice(0, 1000)}`)
+  if (!isTransient(response.status, text, body)) {
+    throw error
+  }
+  const retryAfterMs = parseRetryAfter(response.headers.get('retry-after'))
+  return retryAfterMs === undefined ? { transientError: error } : { transientError: error, retryAfterMs }
+}
+
+// Server errors such as a 502 with an HTML body, rate limits,
+// and a query timeout, which GitHub returns as 200 with an error and no data.
+const isTransient = (status: number, text: string, body: GraphQLBody<unknown> | undefined): boolean =>
+  status >= 500 ||
+  status === 429 ||
+  (status === 403 && /rate limit/i.test(text)) ||
+  (body?.errors ?? []).some((e) => e.type === 'RATE_LIMITED' || /timeout/i.test(e.message ?? ''))
+
+const parseRetryAfter = (value: string | null): number | undefined => {
+  const seconds = Number(value)
+  return value && Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds, 60) * 1_000 : undefined
 }
 
 const parseJSON = (text: string): unknown => {
