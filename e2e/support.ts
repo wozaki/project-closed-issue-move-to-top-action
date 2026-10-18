@@ -11,18 +11,49 @@ export const getToken = (): string => {
   return token
 }
 
+const MAX_ATTEMPTS = 3
+
+// Retries server errors, such as a 502 with an HTML body, so that a transient GitHub outage does not fail the test.
+// The mutations used by the tests are idempotent, so retrying them is safe.
 const graphql = async <T>(query: string, variables: Record<string, unknown> = {}): Promise<T> => {
-  const response = await fetch('https://api.github.com/graphql', {
-    method: 'POST',
-    headers: { authorization: `bearer ${getToken()}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ query, variables }),
-  })
-  const body = (await response.json()) as { data?: T; errors?: unknown }
-  if (!response.ok || body.errors || !body.data) {
-    throw new Error(`GraphQL request failed (${response.status}): ${JSON.stringify(body)}`)
+  for (let attempt = 1; ; attempt++) {
+    let response: Response
+    let text: string
+    try {
+      response = await fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: { authorization: `bearer ${getToken()}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ query, variables }),
+      })
+      text = await response.text()
+    } catch (error) {
+      if (attempt < MAX_ATTEMPTS) {
+        await sleep(5_000 * attempt)
+        continue
+      }
+      throw error
+    }
+    if (response.status >= 500 && attempt < MAX_ATTEMPTS) {
+      await sleep(5_000 * attempt)
+      continue
+    }
+    const body = parseJSON(text) as { data?: T; errors?: unknown } | undefined
+    if (!response.ok || !body || body.errors || !body.data) {
+      throw new Error(`GraphQL request failed (${response.status}): ${text.slice(0, 1000)}`)
+    }
+    return body.data
   }
-  return body.data
 }
+
+const parseJSON = (text: string): unknown => {
+  try {
+    return JSON.parse(text)
+  } catch {
+    return undefined
+  }
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export type Project = {
   id: string
@@ -147,7 +178,7 @@ export const waitForItems = async (description: string, predicate: (items: Item[
     if (Date.now() > deadline) {
       throw new Error(`Timed out waiting for ${description}. Items: ${JSON.stringify(items)}`)
     }
-    await new Promise((resolve) => setTimeout(resolve, 2_000))
+    await sleep(2_000)
   }
 }
 

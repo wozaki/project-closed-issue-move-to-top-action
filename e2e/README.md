@@ -33,6 +33,8 @@ E2E_GITHUB_TOKEN="$(gh auth token)" pnpm e2e
 
 The token needs the `project` scope.
 
+Don't run it while the e2e workflow is running. Both change the same fixture project, so they break each other's state.
+
 ## CI
 
 `.github/workflows/e2e.yaml` runs on pull requests and pushes that change the action, weekly, and on demand.
