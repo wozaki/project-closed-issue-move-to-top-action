@@ -177,9 +177,18 @@ export const runAction = async (issue: { number: number; nodeId: string }, input
   }
   return new Promise<ActionResult>((resolve) => {
     execFile(process.execPath, ['dist/index.js'], { env }, (error, stdout, stderr) => {
-      process.stdout.write(stdout)
-      process.stderr.write(stderr)
+      process.stdout.write(prefixLines(stdout))
+      process.stderr.write(prefixLines(stderr))
       resolve({ exitCode: error ? (typeof error.code === 'number' ? error.code : 1) : 0, stdout })
     })
   })
 }
+
+// The runner interprets workflow commands such as ::error:: only at the start of a line.
+// Prefixing the output keeps the expected failures of the action from becoming annotations of the e2e job.
+const prefixLines = (output: string): string =>
+  output
+    .split('\n')
+    .filter((line) => line !== '')
+    .map((line) => `[action] ${line}\n`)
+    .join('')
