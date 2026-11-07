@@ -55,11 +55,11 @@ The tests reset the status and position of the fixture items before each test. D
 
 The closed issues labeled `e2e-move-to-top` in [wozaki/sandbox-issue](https://github.com/wozaki/sandbox-issue/issues?q=label%3Ae2e-move-to-top). They are listed in `fixture.ts`.
 
-| Issue | In the project | Role |
-|---|---|---|
-| [#70](https://github.com/wozaki/sandbox-issue/issues/70) `[e2e move-to-top] anchor (kept in Done)` | Yes | Kept at the top in Done, so that the issue under test starts below another item |
-| [#71](https://github.com/wozaki/sandbox-issue/issues/71) `[e2e move-to-top] status Todo, moves to top as Done` | Yes | Starts in Todo, moved to the top and updated to Done |
-| [#72](https://github.com/wozaki/sandbox-issue/issues/72) `[e2e move-to-top] status Done, moves to top` | Yes | Starts in Done, moved to the top without updating the status |
-| [#73](https://github.com/wozaki/sandbox-issue/issues/73) `[e2e move-to-top] not in project` | No | Skipped by the action |
+| Issue                                                                                                          | In the project | Role                                                                            |
+| -------------------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------- |
+| [#70](https://github.com/wozaki/sandbox-issue/issues/70) `[e2e move-to-top] anchor (kept in Done)`             | Yes            | Kept at the top in Done, so that the issue under test starts below another item |
+| [#71](https://github.com/wozaki/sandbox-issue/issues/71) `[e2e move-to-top] status Todo, moves to top as Done` | Yes            | Starts in Todo, moved to the top and updated to Done                            |
+| [#72](https://github.com/wozaki/sandbox-issue/issues/72) `[e2e move-to-top] status Done, moves to top`         | Yes            | Starts in Done, moved to the top without updating the status                    |
+| [#73](https://github.com/wozaki/sandbox-issue/issues/73) `[e2e move-to-top] not in project`                    | No             | Skipped by the action                                                           |
 
 wozaki is a user, not an organization, so every test also goes through the fallback from the organization query to the user query.
