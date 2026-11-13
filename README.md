@@ -8,6 +8,7 @@ A GitHub Action that automatically moves closed issues to the top of a specified
 ## Overview
 
 When an issue is closed, this action:
+
 1. Checks if the issue belongs to a specific GitHub Project V2
 2. Updates the issue's status to the specified column (default: "Done")
 3. **Moves the issue to the TOP of that column**
